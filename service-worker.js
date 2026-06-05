@@ -1,6 +1,6 @@
 // Service worker za Retro LCD — Submarine.
 // Povecaj CACHE_VERSION na svaku promenu shell-a.
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = `retrogames-${CACHE_VERSION}`;
 
 const SCOPE = new URL(self.registration.scope).pathname;

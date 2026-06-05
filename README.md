@@ -20,6 +20,10 @@ Može da se **instalira kao aplikacija** (PWA) i radi offline.
 |:---:|:---:|
 | ![rescue](screenshots/rescue.png) | ![torpedo](screenshots/torpedo.png) |
 
+**Mobilni (uspravni) prikaz** — responsive: bez bočnih ukrasa, ekran preko cele širine, LEFT/RIGHT dugmad na dnu (palac ih lako dohvati):
+
+<p align="center"><img src="screenshots/rescue-mobile.png" width="240" alt="rescue mobilni"></p>
+
 ---
 
 ## Glavni princip: „pre-drawn LCD layout"

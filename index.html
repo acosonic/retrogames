@@ -92,6 +92,29 @@
   .rbtn.pill{width:54px;height:22px;border-radius:6px;}
   .glabel{color:#7a3a06;font:700 11px Arial;margin-top:6px;letter-spacing:1px;text-align:center;}
   .hint{text-align:center;font-size:11px;color:#7a3a06;opacity:.85;margin-top:10px;}
+
+  /* ---------- MOBILNI (uspravni telefon): bez bočnih ukrasa, ekran preko cele širine ---------- */
+  @media (max-width:600px){
+    html,body{max-width:100%;overflow-x:hidden;}
+    body{padding:0;align-items:flex-start;}
+    /* grid: red 1 = ekran (preko oba stupca), red 2 = LEFT | RIGHT */
+    .device{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-content:space-between;
+      width:100%;min-height:100dvh;border-radius:0;padding:8px;}
+    .decals{display:none;}                 /* nema bočnih ukrasa */
+    .notes{display:none;}                  /* više mesta ekranu */
+    .center{grid-column:1 / -1;grid-row:1;min-width:0;margin:0;padding:10px;}  /* ekran preko cele širine, red 1 */
+    .device>.grip:first-of-type{grid-column:1;grid-row:2;}   /* LEFT u red 2 */
+    .device>.grip:last-of-type{grid-column:2;grid-row:2;}    /* RIGHT u red 2 */
+    .screen-frame{padding:8px;}
+    .banner{font-size:18px;letter-spacing:4px;margin-top:10px;}
+    .bars{margin-top:10px;gap:34px;}
+    .hint{font-size:11px;margin-top:8px;overflow-wrap:anywhere;}
+    /* LEFT/RIGHT kao dva velika dugmeta u redu ispod ekrana */
+    .grip{flex-direction:row;justify-content:center;align-items:center;
+      min-width:0;width:auto;padding:12px;border-radius:16px;}
+    .glabel{display:none;}
+    .rbtn.round{width:clamp(60px,18vw,84px);height:clamp(60px,18vw,84px);font-size:26px;}
+  }
 </style>
 </head>
 <body>
