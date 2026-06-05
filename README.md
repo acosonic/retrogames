@@ -20,7 +20,7 @@ Može da se **instalira kao aplikacija** (PWA) i radi offline.
 |:---:|:---:|
 | ![rescue](screenshots/rescue.png) | ![torpedo](screenshots/torpedo.png) |
 
-**Mobilni (uspravni) prikaz** — responsive: pun ekran sa **poluprovidnim touch kontrolama preko igrice** (kao prava konzola) — LEFT/RIGHT u donjim uglovima, S/S i GAME 1/2 dole na sredini:
+**Mobilni (uspravni) prikaz** — responsive: žuto telo igrice (kao torpedo), ekran preko cele širine, **bez bočnih ukrasa i crnih hvataljki**; LEFT/RIGHT i S/S/GAME 1/2 su dugmad **na okviru** ispod ekrana. Gore-desno je **PWA „⬇ Instaliraj"** dugme (vidljivo kad browser dozvoli instalaciju):
 
 <p align="center"><img src="screenshots/rescue-mobile.png" width="240" alt="rescue mobilni"></p>
 

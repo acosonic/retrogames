@@ -16,6 +16,12 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon-96x96.png" sizes="96x96" type="image/png">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<script>
+/* uhvati install prompt rano i prikaži dugme */
+window._dip=null;
+window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();window._dip=e;
+  var b=document.getElementById("installBtn"); if(b)b.hidden=false;});
+</script>
 <style>
   :root{
     --body-1:#f6d62a;  --body-2:#e3bd0f;
@@ -93,35 +99,42 @@
   .glabel{color:#7a3a06;font:700 11px Arial;margin-top:6px;letter-spacing:1px;text-align:center;}
   .hint{text-align:center;font-size:11px;color:#7a3a06;opacity:.85;margin-top:10px;}
 
+  /* PWA install dugme (vidljivo samo kad je instalacija moguća) */
+  .install-fab{position:fixed;top:12px;right:12px;z-index:50;border:none;cursor:pointer;
+    background:#1f7fc4;color:#fff;font:700 13px Arial;letter-spacing:.4px;
+    padding:9px 15px;border-radius:20px;box-shadow:0 4px 14px rgba(0,0,0,.45);
+    -webkit-tap-highlight-color:transparent;}
+  .install-fab:active{transform:translateY(1px);}
+  .install-fab[hidden]{display:none;}
+
   /* ---------- MOBILNI (uspravni telefon): bez bočnih ukrasa, ekran preko cele širine ---------- */
-  /* ---------- MOBILNI: ekran preko cele širine, kontrole POLUPROVIDNE PREKO igrice (kao konzola) ---------- */
+  /* ---------- MOBILNI: uspravno žuto telo (kao torpedo) — bez crnih hvataljki/ukrasa,
+       LEFT/RIGHT na žutom okviru ispod ekrana ---------- */
   @media (max-width:600px){
     html,body{max-width:100%;overflow-x:hidden;}
-    body{padding:0;}
-    .device{position:relative;display:block;width:100%;padding:0;border-radius:0;
-      background:transparent;box-shadow:none;}
-    .decals,.notes,.banner,.hint{display:none;}     /* bez ukrasa/natpisa — čist ekran */
-    .center{position:relative;margin:0;padding:0;}  /* visina = ekran */
-    .screen-frame{padding:0;border-radius:0;box-shadow:none;}
-    .screen{border-radius:0;}
-    .glabel{display:none;}
-    /* LEFT / RIGHT — veliki poluprovidni preko donjih uglova ekrana */
-    .grip{position:absolute;bottom:calc(16px + env(safe-area-inset-bottom));z-index:6;
-      background:transparent;box-shadow:none;padding:0;width:auto;min-width:0;}
-    .device>.grip:first-of-type{left:14px;}
-    .device>.grip:last-of-type{right:14px;}
-    .rbtn.round{width:clamp(64px,20vw,92px);height:clamp(64px,20vw,92px);font-size:30px;opacity:.72;}
-    .rbtn.round:active{opacity:.95;}
-    /* S/S + GAME 1/2 — male poluprovidne preko dna (sredina) */
-    .bars{position:absolute;bottom:calc(20px + env(safe-area-inset-bottom));left:50%;
-      transform:translateX(-50%);gap:14px;margin:0;z-index:6;}
-    .bartn small{display:none;}
-    .rbtn.pill{width:50px;height:24px;opacity:.8;}
-    .rbtn.pill:active{opacity:.97;}
+    body{padding:10px;}
+    /* žuto telo igrice; ekran preko cele širine (red 1), LEFT|RIGHT na okviru (red 2) */
+    .device{display:flex;flex-wrap:wrap;flex-direction:row;align-items:center;
+      width:100%;max-width:460px;margin:0 auto;padding:14px 14px 16px;border-radius:26px;gap:8px;
+      background:linear-gradient(160deg,var(--body-1),var(--body-2));
+      box-shadow:inset 0 2px 0 rgba(255,255,255,.5), inset 0 -4px 10px rgba(0,0,0,.25),
+        0 0 0 2px #b9970c, 0 18px 40px rgba(0,0,0,.55);}
+    .decals,.notes{display:none;}                 /* bez ukrasnih sličica/nota */
+    .center{flex:0 0 100%;min-width:0;order:0;margin:0;padding:0;
+      background:transparent;box-shadow:none;}    /* ekran preko cele širine */
+    .screen-frame{padding:10px;}                   /* tamni okvir ekrana ostaje (kao torpedo) */
+    .banner{margin-top:12px;}
+    .bars{margin-top:10px;gap:34px;}
+    .hint{font-size:11px;margin-top:8px;overflow-wrap:anywhere;}
+    /* LEFT / RIGHT — na žutom okviru (bez crnih hvataljki), jedno levo jedno desno */
+    .grip{order:1;flex:1;min-width:0;background:transparent;box-shadow:none;border-radius:0;
+      flex-direction:row;justify-content:center;align-items:center;padding:8px 4px 0;}
+    .rbtn.round{width:clamp(58px,16vw,76px);height:clamp(58px,16vw,76px);font-size:24px;}
   }
 </style>
 </head>
 <body>
+  <button id="installBtn" class="install-fab" hidden>⬇ Instaliraj</button>
   <div class="device">
     <div class="grip">
       <div class="decals"><span>🚁</span><span>🏊</span><span>🐠</span><span>🪸</span><span>🌿</span></div>
@@ -385,6 +398,21 @@ setMsg("PRESS START",true);
 /* ===== PWA: service worker ===== */
 if("serviceWorker" in navigator)
   window.addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js",{updateViaCache:"none"}).catch(()=>{}));
+
+/* ===== PWA: install dugme ===== */
+(function(){
+  const btn=document.getElementById("installBtn"); if(!btn)return;
+  const installed = matchMedia("(display-mode:standalone)").matches || navigator.standalone;
+  if(installed){ btn.hidden=true; return; }
+  if(window._dip) btn.hidden=false;                 // event već stigao (rana registracija)
+  btn.addEventListener("click",async()=>{
+    if(!window._dip)return;
+    window._dip.prompt();
+    try{ await window._dip.userChoice; }catch(e){}
+    window._dip=null; btn.hidden=true;
+  });
+  window.addEventListener("appinstalled",()=>{ btn.hidden=true; window._dip=null; });
+})();
 </script>
 </body>
 </html>

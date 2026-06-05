@@ -10,6 +10,11 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon-96x96.png" sizes="96x96" type="image/png">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<script>
+window._dip=null;
+window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();window._dip=e;
+  var b=document.getElementById("installBtn"); if(b)b.hidden=false;});
+</script>
 <style>
   :root{
     /* Jedine boje u celoj igri: kuciste + LCD pozadina */
@@ -127,9 +132,16 @@
   .speaker i{width:6px;height:6px;border-radius:50%;background:rgba(0,0,0,.35);
     box-shadow:inset 0 1px 1px rgba(0,0,0,.6);}
   .hint{text-align:center;font-size:11px;color:#4a3a0e;opacity:.8;margin-top:10px;}
+  .install-fab{position:fixed;top:12px;right:12px;z-index:50;border:none;cursor:pointer;
+    background:#1f7fc4;color:#fff;font:700 13px Arial;letter-spacing:.4px;
+    padding:9px 15px;border-radius:20px;box-shadow:0 4px 14px rgba(0,0,0,.45);
+    -webkit-tap-highlight-color:transparent;}
+  .install-fab:active{transform:translateY(1px);}
+  .install-fab[hidden]{display:none;}
 </style>
 </head>
 <body>
+  <button id="installBtn" class="install-fab" hidden>⬇ Instaliraj</button>
   <div class="handheld">
     <div class="brand"><b>Deep&nbsp;Rescue</b><span>LCD-37 • GAME &amp; TIME</span></div>
 
@@ -431,6 +443,20 @@ setMsg("PRESS START",true);
 /* ===== PWA: service worker ===== */
 if("serviceWorker" in navigator)
   window.addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js",{updateViaCache:"none"}).catch(()=>{}));
+
+/* ===== PWA: install dugme ===== */
+(function(){
+  const btn=document.getElementById("installBtn"); if(!btn)return;
+  if(matchMedia("(display-mode:standalone)").matches || navigator.standalone){ btn.hidden=true; return; }
+  if(window._dip) btn.hidden=false;
+  btn.addEventListener("click",async()=>{
+    if(!window._dip)return;
+    window._dip.prompt();
+    try{ await window._dip.userChoice; }catch(e){}
+    window._dip=null; btn.hidden=true;
+  });
+  window.addEventListener("appinstalled",()=>{ btn.hidden=true; window._dip=null; });
+})();
 </script>
 </body>
 </html>
