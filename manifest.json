@@ -1,0 +1,20 @@
+{
+  "name": "Retro LCD — Submarine",
+  "short_name": "Submarine",
+  "description": "Retro LCD handheld igre — Submarine (rescue) i Torpedo. Pravi 'Game & Watch' osećaj, radi offline.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0e2630",
+  "theme_color": "#1f7fc4",
+  "orientation": "any",
+  "lang": "sr",
+  "version": "1",
+  "icons": [
+    { "src": "web-app-manifest-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "web-app-manifest-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "web-app-manifest-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "web-app-manifest-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "categories": ["games", "entertainment"]
+}

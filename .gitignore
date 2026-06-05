@@ -1,0 +1,25 @@
+# OS / editor
+.DS_Store
+*.bak
+*.bak.*
+*.swp
+.vscode/
+.idea/
+
+# language runtimes
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# build artifacts
+dist/
+build/
+*.log
+
+# Claude lokalne postavke
+.claude/
+
+# Placeni scuba-diver asseti — NE distribuirati (samo lokalno)
+svg/

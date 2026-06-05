@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TORPEDO — Retro LCD (Game &amp; Watch)</title>
+<meta name="description" content="Retro LCD handheld igra — podmornica gađa mine torpedom i hvata ronioce. Radi offline (PWA).">
+<meta name="theme-color" content="#1f7fc4">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-96x96.png" sizes="96x96" type="image/png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<style>
+  :root{
+    /* Jedine boje u celoj igri: kuciste + LCD pozadina */
+    --case-1:#c9a23a;      /* zlatno-zuto plasticno kuciste (Game & Watch stil) */
+    --case-2:#9c7a22;
+    --case-edge:#6e5413;
+    --lcd-bg-1:#c3ccae;    /* blago zelenkasto-siv LCD panel */
+    --lcd-bg-2:#a9b596;
+    --lcd-ink:#0d1308;     /* "tinta" segmenata - skoro crna */
+    --btn:#2a2a2a;
+    --btn-edge:#000;
+    --label:#7a8466;
+  }
+
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:radial-gradient(circle at 50% 30%, #3a3a40, #16161a 70%);
+    font-family:"Arial Narrow",Arial,sans-serif;
+    display:flex;align-items:center;justify-content:center;
+    min-height:100dvh;padding:18px;
+    color:#eee;
+  }
+
+  /* ---------- KUCISTE (handheld) ---------- */
+  .handheld{
+    width:min(440px,96vw);
+    background:linear-gradient(160deg,var(--case-1),var(--case-2));
+    border-radius:34px;
+    padding:22px 20px 26px;
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,.45),
+      inset 0 -4px 10px rgba(0,0,0,.35),
+      0 18px 40px rgba(0,0,0,.55),
+      0 0 0 2px var(--case-edge);
+    position:relative;
+  }
+  .brand{
+    display:flex;justify-content:space-between;align-items:baseline;
+    padding:0 8px 12px;color:#4a3a0e;
+  }
+  .brand b{font-size:18px;letter-spacing:2px;text-transform:uppercase;}
+  .brand span{font-size:11px;letter-spacing:1px;opacity:.7;}
+
+  /* ---------- LCD EKRAN (uokviren) ---------- */
+  .screen-frame{
+    background:linear-gradient(160deg,#2c2c2c,#101010);
+    border-radius:14px;
+    padding:14px;
+    box-shadow:inset 0 3px 8px rgba(0,0,0,.7), 0 1px 0 rgba(255,255,255,.25);
+  }
+  .screen{
+    position:relative;
+    border-radius:6px;
+    overflow:hidden;
+    background:
+      radial-gradient(120% 80% at 50% 0%, rgba(255,255,255,.18), rgba(255,255,255,0) 55%),
+      linear-gradient(160deg,var(--lcd-bg-1),var(--lcd-bg-2));
+    box-shadow:inset 0 0 22px rgba(60,70,40,.5);
+  }
+  .screen svg{display:block;width:100%;height:auto;}
+  /* odsjaj + blagi vinjet preko LCD-a */
+  .screen::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:
+      linear-gradient(115deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 22%),
+      radial-gradient(130% 120% at 50% 40%, rgba(0,0,0,0) 60%, rgba(40,50,25,.28) 100%);
+    mix-blend-mode:screen;
+  }
+
+  /* ---------- LCD SEGMENTI (pre-drawn) ---------- */
+  .lcd-seg{
+    fill:var(--lcd-ink);
+    opacity:.11;                 /* neaktivno: jedva vidljivo */
+    filter:blur(.25px);
+    transition:opacity .03s linear;
+  }
+  .lcd-seg.on{ opacity:.92; }     /* aktivno: tamno */
+  .lcd-wave{
+    fill:none;stroke:var(--lcd-ink);stroke-width:2.4;
+    opacity:.13;filter:blur(.25px);stroke-linecap:round;
+  }
+  .lcd-wave.on{opacity:.6;}
+  .lcd-frame{ fill:none;stroke:var(--lcd-ink);stroke-width:2;opacity:.18; }
+  .lcd-label{ fill:var(--label);font:700 13px Arial;letter-spacing:1px;opacity:.85; }
+  .lcd-msg{
+    fill:var(--lcd-ink);font:900 34px Arial;letter-spacing:3px;text-anchor:middle;
+    opacity:0;transition:opacity .15s;
+  }
+  .lcd-msg.on{opacity:.9;}
+  .lcd-msg.blink{animation:blink 1s steps(1) infinite;}
+  @keyframes blink{50%{opacity:.12;}}
+
+  /* ---------- KONTROLE na kucistu ---------- */
+  .controls{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-top:20px;padding:0 6px;
+  }
+  .dpad{display:flex;gap:14px;}
+  .btn{
+    border:none;cursor:pointer;color:#ddd;
+    background:linear-gradient(160deg,#3a3a3a,#1a1a1a);
+    box-shadow:0 4px 0 #000, inset 0 1px 0 rgba(255,255,255,.18);
+    transition:transform .04s, box-shadow .04s;
+    user-select:none;font:700 16px Arial;
+  }
+  .btn:active{transform:translateY(3px);box-shadow:0 1px 0 #000, inset 0 1px 0 rgba(255,255,255,.18);}
+  .btn.round{width:56px;height:56px;border-radius:50%;font-size:22px;}
+  .btn.fire{width:70px;height:70px;border-radius:50%;
+    background:linear-gradient(160deg,#c0392b,#7b211a);color:#fff;font-size:14px;}
+  .btn.small{padding:8px 14px;border-radius:18px;font-size:12px;letter-spacing:1px;}
+  .meta{display:flex;flex-direction:column;align-items:center;gap:8px;}
+  .speaker{display:flex;gap:5px;margin-top:14px;justify-content:center;}
+  .speaker i{width:6px;height:6px;border-radius:50%;background:rgba(0,0,0,.35);
+    box-shadow:inset 0 1px 1px rgba(0,0,0,.6);}
+  .hint{text-align:center;font-size:11px;color:#4a3a0e;opacity:.8;margin-top:10px;}
+</style>
+</head>
+<body>
+  <div class="handheld">
+    <div class="brand"><b>Deep&nbsp;Rescue</b><span>LCD-37 • GAME &amp; TIME</span></div>
+
+    <div class="screen-frame">
+      <div class="screen">
+        <svg id="lcd" viewBox="0 0 520 660" aria-label="LCD ekran"></svg>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad">
+        <button class="btn round" id="left" aria-label="levo">◄</button>
+        <button class="btn round" id="right" aria-label="desno">►</button>
+      </div>
+      <div class="meta">
+        <button class="btn small" id="start">START</button>
+      </div>
+      <button class="btn fire" id="fire">TORPEDO</button>
+    </div>
+    <div class="speaker"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="hint">◄ ► pomeraj podmornicu &nbsp;·&nbsp; SPACE / TORPEDO ispaljuje raketicu uvis &nbsp;·&nbsp; hvataj ronioce, raščisti mine<br><a href="index.html" style="color:#4a3a0e">‹ nazad na SUBMARINE (rescue)</a></div>
+  </div>
+
+<script>
+const NS="http://www.w3.org/2000/svg";
+const svg=document.getElementById("lcd");
+function S(tag,attrs={}){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+function on(id,state){const el=document.getElementById(id);if(el)el.classList.toggle("on",!!state);}
+
+/* ===== Layout koordinate (5 kolona x vise redova) ===== */
+const COLS=[80,170,260,350,440];
+const ROW={heli:165, fall:240, wave:300, diver:355, mine:430, torp:495, sub:558};
+
+/* ===== Helperi za siluete (sve iste "tinte", fill se nasledjuje) ===== */
+function silo(id,cx,cy){return S("g",{id,class:"lcd-seg",transform:`translate(${cx},${cy})`});}
+function add(g,tag,a){g.appendChild(S(tag,a));return g;}
+
+function heli(id,x,y){const g=silo(id,x,y);
+  add(g,"rect",{x:-28,y:-16,width:60,height:4,rx:2});            // glavni rotor
+  add(g,"rect",{x:-2,y:-14,width:4,height:7});                   // osovina
+  add(g,"ellipse",{cx:-2,cy:0,rx:20,ry:10});                     // telo
+  add(g,"rect",{x:12,y:-4,width:26,height:5,rx:2});              // rep
+  add(g,"path",{d:"M36,-7 L45,-13 L45,2 Z"});                    // repno krilo
+  add(g,"rect",{x:42,y:-13,width:3,height:11,rx:1});             // repni rotor
+  add(g,"rect",{x:-18,y:10,width:38,height:3,rx:1});             // sanke
+  add(g,"rect",{x:-12,y:7,width:3,height:5});
+  add(g,"rect",{x:9,y:7,width:3,height:5});
+  return g;}
+
+function chute(id,x,y){const g=silo(id,x,y);
+  add(g,"path",{d:"M-21,2 A21,19 0 0 1 21,2 Z"});               // kupola padobrana
+  add(g,"path",{d:"M-18,2 L-3,19 L-1,19 L-16,2 Z"});            // konopci L
+  add(g,"path",{d:"M18,2 L3,19 L1,19 L16,2 Z"});                // konopci D
+  add(g,"circle",{cx:0,cy:23,r:4});                             // glava
+  add(g,"rect",{x:-3,y:27,width:6,height:11,rx:2});             // telo
+  add(g,"rect",{x:-9,y:29,width:18,height:3,rx:1});             // ruke
+  add(g,"rect",{x:-3.5,y:37,width:3,height:8,rx:1});            // noge
+  add(g,"rect",{x:1,y:37,width:3,height:8,rx:1});
+  return g;}
+
+function diver(id,x,y){const g=silo(id,x,y);
+  add(g,"ellipse",{cx:0,cy:0,rx:16,ry:7});                      // telo
+  add(g,"circle",{cx:17,cy:-1,r:6});                            // glava (pliva desno)
+  add(g,"rect",{x:-2,y:-10,width:8,height:6,rx:2});             // boca na ledjima
+  add(g,"rect",{x:15,y:3,width:13,height:3,rx:1});              // ispruzena ruka
+  add(g,"path",{d:"M-15,-4 L-30,-9 L-27,-1 Z"});               // peraje gore
+  add(g,"path",{d:"M-15,4 L-30,10 L-27,2 Z"});                 // peraje dole
+  return g;}
+
+function mine(id,x,y){const g=silo(id,x,y);
+  add(g,"circle",{cx:0,cy:0,r:11});                            // jezgro
+  for(let i=0;i<8;i++){const a=i*Math.PI/4,c=Math.cos(a),s=Math.sin(a),px=-s,py=c;
+    const tx=c*18,ty=s*18,b1x=c*10+px*3,b1y=s*10+py*3,b2x=c*10-px*3,b2y=s*10-py*3;
+    add(g,"polygon",{points:`${b1x},${b1y} ${tx},${ty} ${b2x},${b2y}`});}
+  return g;}
+
+function sub(id,x,y){const g=silo(id,x,y);
+  add(g,"ellipse",{cx:0,cy:0,rx:32,ry:11});                    // trup
+  add(g,"rect",{x:-9,y:-19,width:18,height:11,rx:3});          // tornjic
+  add(g,"rect",{x:-9,y:-22,width:18,height:3,rx:1});
+  add(g,"rect",{x:-2,y:-28,width:3,height:8});                 // periskop
+  add(g,"rect",{x:-2,y:-29,width:7,height:2});
+  add(g,"path",{d:"M30,-6 L43,0 L30,6 Z"});                    // pramac
+  add(g,"path",{d:"M-30,-7 L-41,-11 L-35,0 L-41,11 L-30,7 Z"}); // krma/kormilo
+  add(g,"rect",{x:-44,y:-7,width:2.5,height:14,rx:1});         // propeler
+  return g;}
+
+function torp(id,x,y){const g=silo(id,x,y);
+  add(g,"rect",{x:-4,y:-9,width:8,height:18,rx:4});            // telo (ide na gore)
+  add(g,"path",{d:"M-4,-9 L0,-18 L4,-9 Z"});                   // glava
+  add(g,"path",{d:"M-4,8 L-9,13 L-4,5 Z"});                    // peraje
+  add(g,"path",{d:"M4,8 L9,13 L4,5 Z"});
+  add(g,"circle",{cx:0,cy:15,r:2});                            // mehur
+  add(g,"circle",{cx:-3,cy:20,r:1.4});
+  return g;}
+
+/* ===== 7-segmentne cifre ===== */
+const DW=26,DH=46,DT=6;
+function hpts(x,y,len){const t=DT/2;return `${x},${y} ${x+t},${y-t} ${x+len-t},${y-t} ${x+len},${y} ${x+len-t},${y+t} ${x+t},${y+t}`;}
+function vpts(x,y,len){const t=DT/2;return `${x},${y} ${x+t},${y+t} ${x+t},${y+len-t} ${x},${y+len} ${x-t},${y+len-t} ${x-t},${y+t}`;}
+const SEG={
+  a:hpts(DT/2,DT/2,DW-DT), g:hpts(DT/2,DH/2,DW-DT), d:hpts(DT/2,DH-DT/2,DW-DT),
+  f:vpts(DT/2,DT/2,DH/2-DT/2), b:vpts(DW-DT/2,DT/2,DH/2-DT/2),
+  e:vpts(DT/2,DH/2,DH/2-DT/2), c:vpts(DW-DT/2,DH/2,DH/2-DT/2)
+};
+const DIGITS={0:"abcdef",1:"bc",2:"abgde",3:"abcdg",4:"fgbc",5:"afgcd",6:"afgcde",7:"abc",8:"abcdefg",9:"abcdfg"};
+function drawDigit(x,y,id){const g=S("g",{transform:`translate(${x},${y})`});
+  for(const s in SEG)g.appendChild(S("polygon",{id:`${id}-${s}`,class:"lcd-seg",points:SEG[s]}));
+  return g;}
+function setDigit(id,v){const seg=DIGITS[v]||"";for(const s in SEG)on(`${id}-${s}`,seg.includes(s));}
+
+/* ===== Srce (life) i kiseonik ===== */
+function heart(id,x,y){const g=silo(id,x,y);
+  add(g,"path",{d:"M0,5 C0,1 -3,-3 -7,-3 C-12,-3 -12,3 -12,3 C-12,8 -5,12 0,17 C5,12 12,8 12,3 C12,3 12,-3 7,-3 C3,-3 0,1 0,5 Z"});
+  return g;}
+
+/* =========================================================
+   IZGRADNJA STATICNOG LCD LAYOUTA (sve nacrtano, bledo)
+   ========================================================= */
+function L(text,x,y,anchor="start"){const t=S("text",{x,y,class:"lcd-label","text-anchor":anchor});t.textContent=text;svg.appendChild(t);}
+
+/* --- status traka --- */
+L("SCORE",20,34);
+for(let i=0;i<4;i++)svg.appendChild(drawDigit(20+i*32,42,`d${i}`));
+
+L("LIVES",372,34);
+for(let i=0;i<3;i++)svg.appendChild(heart(`life${i}`,388+i*34,52));
+
+L("OXYGEN",20,112);
+svg.appendChild(S("rect",{class:"lcd-frame",x:104,y:99,width:396,height:18,rx:4}));
+for(let i=0;i<12;i++)svg.appendChild((()=>{const g=S("g",{id:`ox${i}`,class:"lcd-seg"});
+  g.appendChild(S("rect",{x:108+i*32,y:102,width:27,height:12,rx:2}));return g;})());
+
+/* --- razdvojna linija statusa --- */
+svg.appendChild(S("line",{x1:14,y1:128,x2:506,y2:128,stroke:"var(--lcd-ink)","stroke-width":1.2,opacity:.16}));
+
+/* --- GORNJI DEO: 5 helikoptera + 5 padobranaca --- */
+COLS.forEach((x,i)=>svg.appendChild(heli(`heli${i}`,x,ROW.heli)));
+COLS.forEach((x,i)=>svg.appendChild(chute(`fall${i}`,x,ROW.fall)));
+
+/* --- SREDINA: talasi (voda) --- */
+function waveBand(y,id){let d="M14,"+y;for(let x=14;x<=506;x+=24)d+=` q12,-7 24,0 q12,7 24,0`;
+  svg.appendChild(S("path",{id,class:"lcd-wave",d}));}
+waveBand(ROW.wave,"wave0");
+waveBand(ROW.wave+14,"wave1");
+
+/* --- 5 ronioca u vodi + 5 mina --- */
+COLS.forEach((x,i)=>svg.appendChild(diver(`diver${i}`,x,ROW.diver)));
+COLS.forEach((x,i)=>svg.appendChild(mine(`mine${i}`,x,ROW.mine)));
+
+/* --- DONJI DEO: 5 torpeda + 5 podmornica --- */
+COLS.forEach((x,i)=>svg.appendChild(torp(`torp${i}`,x,ROW.torp)));
+COLS.forEach((x,i)=>svg.appendChild(sub(`sub${i}`,x,ROW.sub)));
+
+/* --- centralna poruka (PRESS START / GAME OVER) --- */
+const msg=S("text",{id:"msg",class:"lcd-msg",x:260,y:ROW.wave-6});
+msg.textContent="PRESS START";
+svg.appendChild(msg);
+
+/* =========================================================
+   LOGIKA IGRE
+   ========================================================= */
+/* ===== ZVUK (WebAudio, LCD "beep" preko square talasa) ===== */
+let AC=null;
+function audioInit(){ if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+  if(AC&&AC.state==="suspended")AC.resume(); }
+function tone(freq,dur,type="square",vol=0.16,delay=0){ if(!AC)return; const t=AC.currentTime+delay;
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.type=type; o.frequency.setValueAtTime(freq,t);
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(vol,t+0.008);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t+dur+0.03); }
+const sndMove =()=>tone(880,0.03,"square",0.05);
+const sndFire =()=>{tone(720,0.05,"square",0.11);tone(380,0.08,"square",0.11,0.04);};
+const sndCatch=()=>{tone(660,0.06,"square",0.15);tone(990,0.10,"square",0.15,0.06);};
+const sndMine =()=>{tone(520,0.05,"square",0.13);tone(800,0.07,"square",0.13,0.05);};
+const sndHit  =()=>{tone(200,0.18,"sawtooth",0.17);tone(140,0.22,"sawtooth",0.15,0.05);};
+const sndStart=()=>{tone(523,0.08,"square",0.13);tone(659,0.08,"square",0.13,0.09);tone(784,0.13,"square",0.13,0.18);};
+const sndOver =()=>{tone(440,0.14,"square",0.15);tone(330,0.16,"square",0.15,0.14);tone(220,0.32,"square",0.15,0.30);};
+
+const state={
+  running:false, score:0, lives:3, oxygen:100,
+  subCol:2, heliPos:0, heliDir:1,
+  fallers:[],            // {col,row}  row:1=fall,2=diver,3=resolve
+  mineT:[0,0,0,0,0],     // timer aktivnosti mine po koloni
+  torpCol:null, tick:0
+};
+
+function renderField(){
+  // ugasi sve dinamicke segmente
+  for(let i=0;i<5;i++){on(`heli${i}`,false);on(`fall${i}`,false);on(`diver${i}`,false);
+    on(`mine${i}`,false);on(`sub${i}`,false);on(`torp${i}`,false);}
+  if(state.running)on(`heli${state.heliPos}`,true);
+  state.fallers.forEach(f=>{ if(f.row===1)on(`fall${f.col}`,true); else if(f.row===2)on(`diver${f.col}`,true);});
+  for(let i=0;i<5;i++)on(`mine${i}`,state.mineT[i]>0);
+  on(`sub${state.subCol}`,state.running);
+  if(state.torpCol!==null)on(`torp${state.torpCol}`,true);
+}
+function renderStatus(){
+  const s=Math.min(9999,Math.max(0,state.score)).toString().padStart(4,"0");
+  for(let i=0;i<4;i++)setDigit(`d${i}`,+s[i]);
+  for(let i=0;i<3;i++)on(`life${i}`,i<state.lives);
+  const oxOn=Math.round(state.oxygen/100*12);
+  for(let i=0;i<12;i++)on(`ox${i}`,i<oxOn);
+}
+function render(){renderField();renderStatus();}
+
+function setMsg(text,blink){const m=document.getElementById("msg");m.textContent=text;
+  m.classList.toggle("on",!!text);m.classList.toggle("blink",!!blink);}
+
+function loseLife(){ state.lives--; if(state.lives<=0){gameOver();} else {sndHit();} }
+
+/* Brzina: kreni vrlo lagano (1300ms), pa se blago ubrzava sa bodovima do poda (500ms) */
+function currentDelay(){ return Math.max(500, 1300 - Math.floor(state.score/100)*40); }
+
+let timer=null;
+function scheduleNext(){ clearTimeout(timer); timer=setTimeout(step, currentDelay()); }
+function startGame(){
+  audioInit();
+  Object.assign(state,{running:true,score:0,lives:3,oxygen:100,subCol:2,
+    heliPos:0,heliDir:1,fallers:[],mineT:[0,0,0,0,0],torpCol:null,tick:0});
+  setMsg("",false); sndStart();
+  render();
+  scheduleNext();
+}
+function gameOver(){
+  state.running=false; state.lives=0;
+  clearTimeout(timer); timer=null;
+  state.fallers=[]; state.torpCol=null;
+  render(); setMsg("GAME OVER",true); sndOver();
+}
+
+function step(){
+  state.tick++;
+  // 1) pomeri padajuce objekte
+  state.fallers.forEach(f=>f.row++);
+  const resolved=state.fallers.filter(f=>f.row>=3);
+  state.fallers=state.fallers.filter(f=>f.row<3);
+  resolved.forEach(f=>{
+    if(state.subCol===f.col){
+      if(state.mineT[f.col]>0){ loseLife(); }                              // mina je tu — ronilac stradao, trebalo je rascistiti
+      else { state.score+=10; state.oxygen=Math.min(100,state.oxygen+15); sndCatch(); }
+    } else { loseLife(); }                                                 // promasen ronilac
+  });
+  if(!state.running)return render();
+
+  // 2) mine: traju dugo i VIDLJIVE su (bez iznenadnog paljenja) — stignes da ih gadjas
+  for(let i=0;i<5;i++)if(state.mineT[i]>0)state.mineT[i]--;
+  if(state.tick%4===0 && Math.random()<0.6){
+    const free=[0,1,2,3,4].filter(c=>state.mineT[c]<=0 && !state.fallers.some(f=>f.col===c && f.row>=2));
+    if(free.length){ const c=free[Math.floor(Math.random()*free.length)]; state.mineT[c]=8; }
+  }
+
+  // 3) helikopter leti levo-desno
+  state.heliPos+=state.heliDir;
+  if(state.heliPos>=4){state.heliPos=4;state.heliDir=-1;}
+  if(state.heliPos<=0){state.heliPos=0;state.heliDir=1;}
+
+  // 4) izbaci novog ronioca iz helikoptera
+  if(state.tick%3===0 && !state.fallers.some(f=>f.col===state.heliPos))
+    state.fallers.push({col:state.heliPos,row:1});
+
+  // 5) kiseonik
+  state.oxygen-=3;
+  if(state.oxygen<=0){state.oxygen=100;loseLife();}
+
+  render();
+  if(state.running)scheduleNext();
+}
+
+/* ===== KONTROLE ===== */
+function moveSub(d){ if(!state.running)return;
+  const p=state.subCol; state.subCol=Math.max(0,Math.min(4,state.subCol+d));
+  if(state.subCol!==p)sndMove(); render(); }
+function fire(){ if(!state.running||state.torpCol!==null)return;
+  state.torpCol=state.subCol; sndFire();                                   // raketica leti uvis iz podmornice
+  if(state.mineT[state.subCol]>0){ state.mineT[state.subCol]=0; state.score+=5; sndMine(); } // pogodjena mina
+  render();
+  setTimeout(()=>{ state.torpCol=null; render(); }, 200);
+}
+
+document.getElementById("left").onclick =()=>moveSub(-1);
+document.getElementById("right").onclick=()=>moveSub(1);
+document.getElementById("fire").onclick =fire;
+document.getElementById("start").onclick=startGame;
+
+window.addEventListener("keydown",e=>{
+  if(e.key==="ArrowLeft"){moveSub(-1);e.preventDefault();}
+  else if(e.key==="ArrowRight"){moveSub(1);e.preventDefault();}
+  else if(e.key===" "){fire();e.preventDefault();}
+  else if(e.key==="Enter"){if(!state.running)startGame();e.preventDefault();}
+},{passive:false});
+
+/* ===== Pocetno stanje: statican ekran, sve bledo, poruka ===== */
+render();
+setMsg("PRESS START",true);
+
+/* ===== PWA: service worker ===== */
+if("serviceWorker" in navigator)
+  window.addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js",{updateViaCache:"none"}).catch(()=>{}));
+</script>
+</body>
+</html>
