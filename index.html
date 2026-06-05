@@ -94,26 +94,30 @@
   .hint{text-align:center;font-size:11px;color:#7a3a06;opacity:.85;margin-top:10px;}
 
   /* ---------- MOBILNI (uspravni telefon): bez bočnih ukrasa, ekran preko cele širine ---------- */
+  /* ---------- MOBILNI: ekran preko cele širine, kontrole POLUPROVIDNE PREKO igrice (kao konzola) ---------- */
   @media (max-width:600px){
     html,body{max-width:100%;overflow-x:hidden;}
-    body{padding:0;align-items:flex-start;}
-    /* grid: red 1 = ekran (preko oba stupca), red 2 = LEFT | RIGHT */
-    .device{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-content:space-between;
-      width:100%;min-height:100dvh;border-radius:0;padding:8px;}
-    .decals{display:none;}                 /* nema bočnih ukrasa */
-    .notes{display:none;}                  /* više mesta ekranu */
-    .center{grid-column:1 / -1;grid-row:1;min-width:0;margin:0;padding:10px;}  /* ekran preko cele širine, red 1 */
-    .device>.grip:first-of-type{grid-column:1;grid-row:2;}   /* LEFT u red 2 */
-    .device>.grip:last-of-type{grid-column:2;grid-row:2;}    /* RIGHT u red 2 */
-    .screen-frame{padding:8px;}
-    .banner{font-size:18px;letter-spacing:4px;margin-top:10px;}
-    .bars{margin-top:10px;gap:34px;}
-    .hint{font-size:11px;margin-top:8px;overflow-wrap:anywhere;}
-    /* LEFT/RIGHT kao dva velika dugmeta u redu ispod ekrana */
-    .grip{flex-direction:row;justify-content:center;align-items:center;
-      min-width:0;width:auto;padding:12px;border-radius:16px;}
+    body{padding:0;}
+    .device{position:relative;display:block;width:100%;padding:0;border-radius:0;
+      background:transparent;box-shadow:none;}
+    .decals,.notes,.banner,.hint{display:none;}     /* bez ukrasa/natpisa — čist ekran */
+    .center{position:relative;margin:0;padding:0;}  /* visina = ekran */
+    .screen-frame{padding:0;border-radius:0;box-shadow:none;}
+    .screen{border-radius:0;}
     .glabel{display:none;}
-    .rbtn.round{width:clamp(60px,18vw,84px);height:clamp(60px,18vw,84px);font-size:26px;}
+    /* LEFT / RIGHT — veliki poluprovidni preko donjih uglova ekrana */
+    .grip{position:absolute;bottom:calc(16px + env(safe-area-inset-bottom));z-index:6;
+      background:transparent;box-shadow:none;padding:0;width:auto;min-width:0;}
+    .device>.grip:first-of-type{left:14px;}
+    .device>.grip:last-of-type{right:14px;}
+    .rbtn.round{width:clamp(64px,20vw,92px);height:clamp(64px,20vw,92px);font-size:30px;opacity:.72;}
+    .rbtn.round:active{opacity:.95;}
+    /* S/S + GAME 1/2 — male poluprovidne preko dna (sredina) */
+    .bars{position:absolute;bottom:calc(20px + env(safe-area-inset-bottom));left:50%;
+      transform:translateX(-50%);gap:14px;margin:0;z-index:6;}
+    .bartn small{display:none;}
+    .rbtn.pill{width:50px;height:24px;opacity:.8;}
+    .rbtn.pill:active{opacity:.97;}
   }
 </style>
 </head>
