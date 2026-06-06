@@ -287,6 +287,9 @@ COLS.forEach((x,i)=>{ const n=COLDEPTH[i];
 
 COLS.forEach((x,i)=>svg.appendChild(sub(`sub${i}`,x,SUB_Y)));
 
+/* "potonuo" ronilac na samom dnu — zasvetli kad promašiš (padne skroz na dno) */
+COLS.forEach((x,i)=>svg.appendChild(diverFig(`floor${i}`, x, 364, (i%2?-1:1)*12, (i*5)%DIVER_PATHS.length, i%2?-1:1)));
+
 const msg=S("text",{id:"msg",class:"lcd-msg",x:230,y:236});
 msg.textContent="PRESS START";svg.appendChild(msg);
 
@@ -308,25 +311,41 @@ const sndStart=()=>{tone(523,0.08,"square",0.13);tone(659,0.08,"square",0.13,0.0
 const sndOver =()=>{tone(440,0.14,"square",0.15);tone(330,0.16,"square",0.15,0.14);tone(220,0.32,"square",0.15,0.30);};
 
 /* ===== Melodija "London Bridge Is Falling Down" — jedna nota po potezu helikoptera ===== */
-const N={D4:293.66,E4:329.63,Fs4:369.99,G4:392.00,A4:440.00,B4:493.88};
-const MELODY=[N.A4,N.B4,N.A4,N.G4,N.Fs4,N.G4,N.A4, N.E4,N.Fs4,N.G4, N.Fs4,N.G4,N.A4,
-              N.A4,N.B4,N.A4,N.G4,N.Fs4,N.G4,N.A4, N.E4,N.A4,N.Fs4,N.D4];
+/* visok, piskav "piezo" ton (kao mali metalni zvučnik) — oktavu više, square talas */
+const N={D5:587.33,E5:659.25,Fs5:739.99,G5:783.99,A5:880.00,B5:987.77};
+const MELODY=[N.A5,N.B5,N.A5,N.G5,N.Fs5,N.G5,N.A5, N.E5,N.Fs5,N.G5, N.Fs5,N.G5,N.A5,
+              N.A5,N.B5,N.A5,N.G5,N.Fs5,N.G5,N.A5, N.E5,N.A5,N.Fs5,N.D5];
+function piezo(f,dur){ tone(f,dur,"square",0.09); }
 let melIdx=0;
 function playMelodyStep(){
   const f=MELODY[melIdx]; melIdx=(melIdx+1)%MELODY.length;
-  tone(f, Math.min(0.42, currentDelay()/1000*0.8), "triangle", 0.13);  // krati se kako se ubrzava
+  piezo(f, Math.min(0.30, currentDelay()/1000*0.6));   // krati se kako se ubrzava
+}
+/* Uvod = "Call to Post" (konjička trubačka fanfara); London Bridge ide tek u igri */
+const CN={C5:523.25,E5:659.25,G5:783.99,C6:1046.50};
+const CALL=[[CN.C5,170],[CN.E5,170],[CN.G5,440],[CN.E5,170],[CN.G5,170],[CN.C6,440],
+            [CN.G5,150],[CN.E5,150],[CN.C5,150],[CN.E5,150],[CN.G5,150],[CN.C6,150],
+            [CN.G5,210],[CN.E5,210],[CN.C5,620]];
+let introTimers=[];
+function clearIntro(){ introTimers.forEach(clearTimeout); introTimers=[]; }
+function playIntroThen(cb){
+  clearIntro();
+  let t=0;
+  CALL.forEach(([f,dur])=>{ introTimers.push(setTimeout(()=>piezo(f, dur/1000*0.9), t)); t+=dur; });
+  introTimers.push(setTimeout(cb, t+220));        // pa kreće igra/helikopter (London Bridge)
 }
 
 /* =========================================================
    LOGIKA — RESCUE, 8 nivoa ronioca
    ========================================================= */
-const state={running:false,paused:false,score:0,lives:3,subCol:2,heliPos:0,heliDir:1,fallers:[],tick:0};
+const state={running:false,paused:false,intro:false,score:0,lives:3,subCol:2,heliPos:0,heliDir:1,fallers:[],sinkers:[],tick:0};
 
 function renderField(){
-  for(let i=0;i<5;i++){on(`heli${i}`,false);on(`sub${i}`,false);
+  for(let i=0;i<5;i++){on(`heli${i}`,false);on(`sub${i}`,false);on(`floor${i}`,false);
     for(let lv=0;lv<MAXLV;lv++)on(`dv${lv}_${i}`,false);}
   if(state.running)on(`heli${state.heliPos}`,true);
   state.fallers.forEach(f=>on(`dv${f.row-1}_${f.col}`,true));   // row 1..8 -> nivo 0..7
+  (state.sinkers||[]).forEach(s=>on(`floor${s.col}`,true));      // potonuli na dnu
   on(`sub${state.subCol}`,state.running);
 }
 function renderStatus(){
@@ -339,7 +358,7 @@ function setMsg(t,blink){const m=document.getElementById("msg");m.textContent=t;
   m.classList.toggle("on",!!t);m.classList.toggle("blink",!!blink);}
 function loseLife(){state.lives--; if(state.lives<=0){gameOver();} else {sndHit();}}
 
-function currentDelay(){return Math.max(500,1300-Math.floor(state.score/100)*40);}
+function currentDelay(){return Math.max(450,910-Math.floor(state.score/100)*40);}  // ~30% brži start (helikopter)
 let timer=null;
 function scheduleNext(){clearTimeout(timer);timer=setTimeout(step,currentDelay());}
 function rescueTick(f){return state.tick + (COLDEPTH[f.col]-f.row+1);}
@@ -357,27 +376,33 @@ function canAddFaller(col){
 }
 function startGame(){
   audioInit();
-  Object.assign(state,{running:true,paused:false,score:0,lives:3,subCol:2,heliPos:0,heliDir:1,fallers:[],tick:0});
-  melIdx=0; setMsg("",false); playMelodyStep();   // start = London Bridge (prva nota odmah)
-  render(); scheduleNext();
+  clearIntro(); clearTimeout(timer);
+  Object.assign(state,{running:true,paused:false,intro:true,score:0,lives:3,subCol:2,heliPos:0,heliDir:1,fallers:[],sinkers:[],tick:0});
+  setMsg("",false); render();
+  playIntroThen(()=>{                       // prvo cela melodija, pa kreće helikopter
+    if(!state.running)return;
+    state.intro=false; melIdx=0; playMelodyStep(); scheduleNext();
+  });
 }
 function togglePause(){
-  if(!state.running)return;
+  if(!state.running||state.intro)return;    // ne pauziraj tokom uvodne svirke
   state.paused=!state.paused;
   if(state.paused){ clearTimeout(timer); setMsg("PAUSE",true); }
   else { setMsg("",false); scheduleNext(); }
 }
-function gameOver(){state.running=false;state.lives=0;clearTimeout(timer);timer=null;
-  state.fallers=[];render();setMsg("GAME OVER",true);sndOver();}
+function gameOver(){state.running=false;state.intro=false;state.lives=0;clearTimeout(timer);timer=null;clearIntro();
+  state.fallers=[];state.sinkers=[];render();setMsg("GAME OVER",true);sndOver();}
 
 function step(){
+  if(state.intro)return;                    // dok traje uvodna svirka, igra još ne ide
   state.tick++;
+  state.sinkers.forEach(s=>s.t--); state.sinkers=state.sinkers.filter(s=>s.t>0);  // potonuli nestaju
   state.fallers.forEach(f=>f.row++);
   const resolved=state.fallers.filter(f=>f.row>COLDEPTH[f.col]);  // prosao kroz sve nivoe SVOJE kolone
   state.fallers=state.fallers.filter(f=>f.row<=COLDEPTH[f.col]);
   resolved.forEach(f=>{
     if(state.subCol===f.col){state.score+=10;sndCatch();}
-    else{loseLife();}
+    else{ loseLife(); state.sinkers.push({col:f.col,t:3}); }   // promašaj -> ronilac potone na dno
   });
   if(!state.running)return render();
 
@@ -395,7 +420,7 @@ function step(){
 }
 
 /* ===== KONTROLE ===== */
-function moveSub(d){if(!state.running)return;
+function moveSub(d){if(!state.running||state.intro)return;
   const p=state.subCol;state.subCol=Math.max(0,Math.min(4,state.subCol+d));
   if(state.subCol!==p)sndMove();render();}
 
