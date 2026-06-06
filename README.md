@@ -140,6 +140,13 @@ const COLDEPTH = [6,7,8,8,9];   // kolona 0 ima 6 nivoa, kolona 4 ima 9
 Na **različitim visinama** (`HELI_BOB`) i **nagnuti pod uglom** (`HELI_TILT`) — nisu u istoj liniji,
 i deluju banked dok izbacuju ronioca.
 
+### Muzika i kontrola (S/S)
+
+- **S/S** (i `Enter`/`Space`) je **start i pauza** — dok igra traje, pritisak pauzira (poruka „PAUSE"), ponovni nastavlja.
+- Na start svira **„London Bridge Is Falling Down"** — **jedna nota po potezu** (svako pomeranje
+  helikoptera = sledeća nota melodije, `playMelodyStep()`); kako se igra ubrzava (`currentDelay` opada),
+  note dolaze brže i kraće su. Melodija je niz frekvencija `MELODY` (24 note, loop).
+
 ---
 
 ## Kako su ugrađene SVG siluete (reproducibilno)

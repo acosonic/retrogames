@@ -151,7 +151,7 @@ window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();win
         <div class="bartn"><button class="rbtn pill" id="start"></button><small>S/S</small></div>
         <div class="bartn"><button class="rbtn pill" id="game"></button><small>GAME 1/2</small></div>
       </div>
-      <div class="hint">◄ ► pomeraj podmornicu i hvataj ronioce &nbsp;·&nbsp; S/S = start &nbsp;·&nbsp; GAME 1/2 = Torpedo igra</div>
+      <div class="hint">◄ ► pomeraj podmornicu i hvataj ronioce &nbsp;·&nbsp; S/S = start / pauza &nbsp;·&nbsp; GAME 1/2 = Torpedo igra</div>
     </div>
 
     <div class="grip">
@@ -307,10 +307,20 @@ const sndHit  =()=>{tone(200,0.18,"sawtooth",0.17);tone(140,0.22,"sawtooth",0.15
 const sndStart=()=>{tone(523,0.08,"square",0.13);tone(659,0.08,"square",0.13,0.09);tone(784,0.13,"square",0.13,0.18);};
 const sndOver =()=>{tone(440,0.14,"square",0.15);tone(330,0.16,"square",0.15,0.14);tone(220,0.32,"square",0.15,0.30);};
 
+/* ===== Melodija "London Bridge Is Falling Down" — jedna nota po potezu helikoptera ===== */
+const N={D4:293.66,E4:329.63,Fs4:369.99,G4:392.00,A4:440.00,B4:493.88};
+const MELODY=[N.A4,N.B4,N.A4,N.G4,N.Fs4,N.G4,N.A4, N.E4,N.Fs4,N.G4, N.Fs4,N.G4,N.A4,
+              N.A4,N.B4,N.A4,N.G4,N.Fs4,N.G4,N.A4, N.E4,N.A4,N.Fs4,N.D4];
+let melIdx=0;
+function playMelodyStep(){
+  const f=MELODY[melIdx]; melIdx=(melIdx+1)%MELODY.length;
+  tone(f, Math.min(0.42, currentDelay()/1000*0.8), "triangle", 0.13);  // krati se kako se ubrzava
+}
+
 /* =========================================================
    LOGIKA — RESCUE, 8 nivoa ronioca
    ========================================================= */
-const state={running:false,score:0,lives:3,subCol:2,heliPos:0,heliDir:1,fallers:[],tick:0};
+const state={running:false,paused:false,score:0,lives:3,subCol:2,heliPos:0,heliDir:1,fallers:[],tick:0};
 
 function renderField(){
   for(let i=0;i<5;i++){on(`heli${i}`,false);on(`sub${i}`,false);
@@ -347,8 +357,15 @@ function canAddFaller(col){
 }
 function startGame(){
   audioInit();
-  Object.assign(state,{running:true,score:0,lives:3,subCol:2,heliPos:0,heliDir:1,fallers:[],tick:0});
-  setMsg("",false);sndStart();render();scheduleNext();
+  Object.assign(state,{running:true,paused:false,score:0,lives:3,subCol:2,heliPos:0,heliDir:1,fallers:[],tick:0});
+  melIdx=0; setMsg("",false); playMelodyStep();   // start = London Bridge (prva nota odmah)
+  render(); scheduleNext();
+}
+function togglePause(){
+  if(!state.running)return;
+  state.paused=!state.paused;
+  if(state.paused){ clearTimeout(timer); setMsg("PAUSE",true); }
+  else { setMsg("",false); scheduleNext(); }
 }
 function gameOver(){state.running=false;state.lives=0;clearTimeout(timer);timer=null;
   state.fallers=[];render();setMsg("GAME OVER",true);sndOver();}
@@ -367,6 +384,7 @@ function step(){
   state.heliPos+=state.heliDir;
   if(state.heliPos>=4){state.heliPos=4;state.heliDir=-1;}
   if(state.heliPos<=0){state.heliPos=0;state.heliDir=1;}
+  playMelodyStep();                       // jedna nota po pomeranju helikoptera (brže kako ubrzava)
 
   // Izbaci ronioca samo ako buduci redosled spasavanja ostaje dohvatljiv.
   if(state.tick%3===0 && !state.fallers.some(f=>f.col===state.heliPos && f.row<=1) && canAddFaller(state.heliPos))
@@ -383,13 +401,13 @@ function moveSub(d){if(!state.running)return;
 
 document.getElementById("left").onclick =()=>moveSub(-1);
 document.getElementById("right").onclick=()=>moveSub(1);
-document.getElementById("start").onclick=startGame;
+document.getElementById("start").onclick=()=>{ state.running ? togglePause() : startGame(); };  // S/S = start / pauza
 document.getElementById("game").onclick =()=>location.href="torpedo.html";  // GAME 1/2 -> druga igra
 
 window.addEventListener("keydown",e=>{
   if(e.key==="ArrowLeft"){moveSub(-1);e.preventDefault();}
   else if(e.key==="ArrowRight"){moveSub(1);e.preventDefault();}
-  else if(e.key==="Enter"||e.key===" "){if(!state.running)startGame();e.preventDefault();}
+  else if(e.key==="Enter"||e.key===" "){ state.running ? togglePause() : startGame(); e.preventDefault();}
 },{passive:false});
 
 render();
