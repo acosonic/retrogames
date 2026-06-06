@@ -321,18 +321,19 @@ function playMelodyStep(){
   const f=MELODY[melIdx]; melIdx=(melIdx+1)%MELODY.length;
   piezo(f, Math.min(0.30, currentDelay()/1000*0.6));   // krati se kako se ubrzava
 }
-/* Uvod = "Call to Post" (konjička trubačka fanfara); London Bridge ide tek u igri */
-const CN={C5:523.25,E5:659.25,G5:783.99,C6:1046.50};
-const CALL=[[CN.C5,170],[CN.E5,170],[CN.G5,440],[CN.E5,170],[CN.G5,170],[CN.C6,440],
-            [CN.G5,150],[CN.E5,150],[CN.C5,150],[CN.E5,150],[CN.G5,150],[CN.C6,150],
-            [CN.G5,210],[CN.E5,210],[CN.C5,620]];
-let introTimers=[];
-function clearIntro(){ introTimers.forEach(clearTimeout); introTimers=[]; }
+/* Uvod = isečak pesme (start.mp3, 29–35s); London Bridge ide tek u igri */
+let introTimers=[], startAudio=null;
+function stopStartAudio(){ if(startAudio){ try{startAudio.pause();}catch(e){} startAudio=null; } }
+function clearIntro(){ introTimers.forEach(clearTimeout); introTimers=[]; stopStartAudio(); }
 function playIntroThen(cb){
   clearIntro();
-  let t=0;
-  CALL.forEach(([f,dur])=>{ introTimers.push(setTimeout(()=>piezo(f, dur/1000*0.9), t)); t+=dur; });
-  introTimers.push(setTimeout(cb, t+220));        // pa kreće igra/helikopter (London Bridge)
+  let done=false; const fire=()=>{ if(done)return; done=true; cb(); };
+  try{
+    startAudio=new Audio("start.mp3");
+    startAudio.addEventListener("ended",fire,{once:true});
+    const p=startAudio.play(); if(p&&p.catch)p.catch(()=>{});
+  }catch(e){}
+  introTimers.push(setTimeout(fire, 6600));        // fallback pa kreće igra (London Bridge)
 }
 
 /* =========================================================

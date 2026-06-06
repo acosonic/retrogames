@@ -23,3 +23,6 @@ build/
 
 # Placeni scuba-diver asseti — NE distribuirati (samo lokalno)
 svg/
+
+# izvorna pesma — ne objavljuj (samo isečak start.mp3 ide)
+sayt.mp3

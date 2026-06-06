@@ -143,8 +143,8 @@ i deluju banked dok izbacuju ronioca.
 ### Muzika i kontrola (S/S)
 
 - **S/S** (i `Enter`/`Space`) je **start i pauza** — dok igra traje, pritisak pauzira (poruka „PAUSE"), ponovni nastavlja.
-- Na start prvo odsvira **„Call to Post"** (konjička trubačka fanfara, `CALL` + `playIntroThen`),
-  **pa tek onda kreće helikopter**.
+- Na start se pusti **isečak pesme** (`start.mp3`, 6s — odsečeno iz `sayt.mp3`, 29–35s, preko `<audio>`),
+  **pa tek onda kreće helikopter**. Izvorni `sayt.mp3` se ne objavljuje (`.gitignore`).
 - U igri svira **„London Bridge Is Falling Down"** — **jedna nota po potezu** (svako pomeranje
   helikoptera = sledeća nota, `playMelodyStep()`); kako se ubrzava (`currentDelay` opada), note su brže/kraće. `MELODY` = 24 note, loop.
 - Zvuk je **visok, piezo „biper"** — oktava 5 i `square` talas (`piezo()`), kao mali metalni zvučnik.
