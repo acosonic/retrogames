@@ -147,9 +147,10 @@ i deluju banked dok izbacuju ronioca.
   **pa tek onda kreće helikopter**. Izvorni `sayt.mp3` se ne objavljuje (`.gitignore`).
 - U igri svira **„London Bridge Is Falling Down"** — **jedna nota po potezu** (svako pomeranje
   helikoptera = sledeća nota, `playMelodyStep()`); kako se ubrzava (`currentDelay` opada), note su brže/kraće. `MELODY` = 24 note, loop.
-- Zvuk je **visok, piezo „biper"** — oktava 5 i `square` talas (`piezo()`), kao mali metalni zvučnik.
+- Zvuk je **vrlo visok, piezo „biper"** — oktava 6 i `square` talas (`piezo()`); igrica bukvalno „cijuče" kao jeftini LCD.
 - **Helikopter starta ~30% brže** — početni takt `currentDelay` je `910ms` (pod `450ms`).
 - **Promašen ronilac potone na dno** — zasvetli `floor{col}` silueta na morskom dnu (`state.sinkers`).
+- **Na kraju (game over, sva 3 života)** odsvira se **cela melodija normalnim tempom** (`playMelodyFull`).
 
 ---
 
