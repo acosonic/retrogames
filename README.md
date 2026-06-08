@@ -8,18 +8,18 @@ Može da se **instalira kao aplikacija** (PWA) i radi offline.
 
 ---
 
-## 🆘 HELP WANTED — zvuk / audio
+## 🆘 HELP WANTED — audio / sound
 
-**Uzor (originalna igrica):** https://www.youtube.com/watch?v=cE9FbDVp8TQ&t=2s
+**Reference (the original handheld this game is based on):** https://www.youtube.com/watch?v=cE9FbDVp8TQ&t=2s
 
-Tražim pomoć oko zvuka:
+I'm looking for help with the sound:
 
-- **Start sound** — koja je to pesma? (isečak koji svira na start igre)
-- Kako da **zvuk više liči na tu staru igricu** — onaj **metalni „beeper" zvučnik** (piskav, tanak, piezo)?
-  Trenutno koristim `square` WebAudio ton; zanima me kako da bude vernije:
-  talasni oblik, filtri/izobličenje, ili sample-ovi iz prave igrice.
+- **Start sound** — what song is it? (the short clip that plays when the game starts)
+- How can I make the audio **closer to that old handheld** — that thin, squeaky **metallic "beeper" (piezo) speaker**?
+  It's currently a `square` WebAudio tone run through a WaveShaper hard-clip + highpass. Any ideas for a
+  more authentic timbre are welcome: waveform, filters/distortion, or real samples ripped from the original.
 
-Ako znaš pesmu ili imaš ideju/rešenje za zvuk — **otvori issue ili PR**. 🙏
+If you know the song, or have an idea/fix for the sound, **open an issue or a PR**. 🙏
 
 ---
 
