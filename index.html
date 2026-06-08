@@ -132,17 +132,6 @@ window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();win
     .rbtn.round{width:clamp(58px,16vw,76px);height:clamp(58px,16vw,76px);font-size:24px;}
   }
 
-  /* PRIVREMENI tuner zvuka */
-  #tuner{position:fixed;top:10px;left:10px;z-index:60;width:230px;
-    background:rgba(15,25,35,.92);color:#dfeef5;font:12px Arial;border-radius:10px;padding:10px 12px;
-    box-shadow:0 6px 20px rgba(0,0,0,.5);}
-  #tuner b{display:block;margin-bottom:6px;}
-  #tuner label{display:flex;align-items:center;gap:6px;margin:4px 0;}
-  #tuner input[type=range]{flex:1;}
-  #tuner label span{width:42px;text-align:right;color:#7fd0ff;}
-  #tuner .trow{display:flex;gap:6px;margin:8px 0 6px;}
-  #tuner button{flex:1;background:#1f7fc4;color:#fff;border:none;border-radius:6px;padding:6px;cursor:pointer;}
-  #tuner code{display:block;background:#000;color:#6f6;padding:5px;border-radius:5px;font-size:11px;word-break:break-all;}
 </style>
 </head>
 <body>
@@ -170,18 +159,6 @@ window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();win
       <div class="decals"><span>🚤</span><span>🚢</span><span>🐟</span><span>🐙</span><span>🌊</span></div>
       <div><button class="rbtn round" id="right" aria-label="desno">►</button><div class="glabel">RIGHT</div></div>
     </div>
-  </div>
-
-  <!-- PRIVREMENI tuner zvuka: našteluj pa pročitaj vrednosti (ukloniti kasnije) -->
-  <div id="tuner">
-    <b>🎛 Tuner zvuka</b>
-    <label>Oktava (×) <input type="range" id="t-oct" min="1" max="6" step="0.5" value="4"><span id="v-oct">4</span></label>
-    <label>Izobličenje <input type="range" id="t-dist" min="1" max="20" step="1" value="9"><span id="v-dist">9</span></label>
-    <label>Highpass Hz <input type="range" id="t-hp" min="100" max="2000" step="50" value="900"><span id="v-hp">900</span></label>
-    <label>Jačina <input type="range" id="t-vol" min="0.02" max="0.2" step="0.005" value="0.085"><span id="v-vol">0.085</span></label>
-    <label>Tempo ms <input type="range" id="t-tempo" min="300" max="1200" step="10" value="650"><span id="v-tempo">650</span></label>
-    <div class="trow"><button id="t-test">▶ Test melodije</button><button id="t-beep">• Beep</button></div>
-    <code id="t-out">oct=4 dist=9 hp=900 vol=0.085 tempo=650</code>
   </div>
 
 <script>
@@ -335,9 +312,9 @@ const sndStart=()=>{tone(523,0.08,"square",0.13);tone(659,0.08,"square",0.13,0.0
 const sndOver =()=>{tone(440,0.14,"square",0.15);tone(330,0.16,"square",0.15,0.14);tone(220,0.32,"square",0.15,0.30);};
 
 /* ===== Melodija "London Bridge Is Falling Down" — jedna nota po potezu helikoptera ===== */
-/* "piezo" beeper: square -> waveshaper(hard-clip) -> highpass; svi parametri iz TUNE (live tuner).
+/* "piezo" beeper: square -> waveshaper(hard-clip) -> highpass; parametri u TUNE.
    MELODY je u oktavi 4; stvarna visina = f * TUNE.octMul (octMul 4 => oktava 6). */
-const TUNE={octMul:4, dist:9, hp:900, vol:0.085, tempo:650};
+const TUNE={octMul:2.5, dist:18, hp:1950, vol:0.085, tempo:650};   // naštelovano tunerom
 const N={D4:293.66,E4:329.63,Fs4:369.99,G4:392.00,A4:440.00,B4:493.88};
 const MELODY=[N.A4,N.B4,N.A4,N.G4,N.Fs4,N.G4,N.A4, N.E4,N.Fs4,N.G4, N.Fs4,N.G4,N.A4,
               N.A4,N.B4,N.A4,N.G4,N.Fs4,N.G4,N.A4, N.E4,N.A4,N.Fs4,N.D4];
@@ -484,21 +461,6 @@ window.addEventListener("keydown",e=>{
 
 render();
 setMsg("PRESS START",true);
-
-/* ===== Tuner zvuka (PRIVREMENO) — našteluj, pročitaj #t-out, javi vrednosti ===== */
-(function(){
-  const $=id=>document.getElementById(id); if(!$("tuner"))return;
-  const out=()=>{ $("t-out").textContent=`oct=${TUNE.octMul} dist=${TUNE.dist} hp=${TUNE.hp} vol=${TUNE.vol} tempo=${TUNE.tempo}`; };
-  const bind=(id,key,vid,extra)=>{ const el=$(id); el.addEventListener("input",()=>{ TUNE[key]=parseFloat(el.value); $(vid).textContent=el.value; if(extra)extra(); out(); }); };
-  bind("t-oct","octMul","v-oct");
-  bind("t-dist","dist","v-dist",()=>{ PIEZO_CURVE=makeCurve(TUNE.dist); });
-  bind("t-hp","hp","v-hp");
-  bind("t-vol","vol","v-vol");
-  bind("t-tempo","tempo","v-tempo");
-  $("t-test").addEventListener("click",()=>{ audioInit(); playMelodyFull(Math.max(180,Math.round(TUNE.tempo*0.42))); });
-  $("t-beep").addEventListener("click",()=>{ audioInit(); piezo(MELODY[0],0.18); });
-  out();
-})();
 
 /* ===== PWA: service worker ===== */
 if("serviceWorker" in navigator)
