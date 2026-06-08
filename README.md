@@ -6,6 +6,23 @@ Dve samostalne HTML igre koje imitiraju **prave stare LCD „Game & Watch" / „
 **▶ Uživo (GitHub Pages):** https://acosonic.github.io/retrogames/  
 Može da se **instalira kao aplikacija** (PWA) i radi offline.
 
+---
+
+## 🆘 HELP WANTED — zvuk / audio
+
+**Uzor (originalna igrica):** https://www.youtube.com/watch?v=cE9FbDVp8TQ&t=2s
+
+Tražim pomoć oko zvuka:
+
+- **Start sound** — koja je to pesma? (isečak koji svira na start igre)
+- Kako da **zvuk više liči na tu staru igricu** — onaj **metalni „beeper" zvučnik** (piskav, tanak, piezo)?
+  Trenutno koristim `square` WebAudio ton; zanima me kako da bude vernije:
+  talasni oblik, filtri/izobličenje, ili sample-ovi iz prave igrice.
+
+Ako znaš pesmu ili imaš ideju/rešenje za zvuk — **otvori issue ili PR**. 🙏
+
+---
+
 <p align="center"><img src="web-app-manifest-192x192.png" width="96" alt="ikona"></p>
 
 | Fajl | Igra | Izgled ekrana |
